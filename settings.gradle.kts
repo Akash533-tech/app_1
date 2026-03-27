@@ -22,4 +22,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "JalDrishti"
 include(":app")
- 
+
+
+.
