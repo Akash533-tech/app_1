@@ -69,7 +69,7 @@ class OpenAIClient(
             }
             
             val json = JSONObject().apply {
-                put("model", "openai/gpt-3.5-turbo")
+                put("model", "llama-3.1-8b-instant")
                 put("messages", messages)
                 put("max_tokens", 256)
                 put("temperature", 0.7)
@@ -78,11 +78,9 @@ class OpenAIClient(
             val requestBody = json.toString().toRequestBody("application/json".toMediaType())
             
             val request = Request.Builder()
-                .url("https://openrouter.ai/api/v1/chat/completions")
+                .url("https://api.groq.com/openai/v1/chat/completions")
                 .addHeader("Authorization", "Bearer $apiKey")
                 .addHeader("Content-Type", "application/json")
-                .addHeader("HTTP-Referer", "https://github.com/your-repo") // Optional
-                .addHeader("X-Title", "Carbon Credit Assistant") // Optional
                 .post(requestBody)
                 .build()
             
@@ -119,7 +117,7 @@ class OpenAIClient(
     suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
         try {
             val request = Request.Builder()
-                .url("https://openrouter.ai/api/v1/models")
+                .url("https://api.groq.com/openai/v1/models")
                 .addHeader("Authorization", "Bearer $apiKey")
                 .get()
                 .build()

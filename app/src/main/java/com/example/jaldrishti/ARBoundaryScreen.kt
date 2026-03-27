@@ -212,13 +212,11 @@ fun ARBoundaryScreen(navController: NavController, viewModel: LandViewModel) {
                                     val isCoastal = currentType in listOf("Mangrove", "Seagrass", "Salt Marsh")
                                     
                                     if (isCoastal) {
-                                         viewModel.saveCoastalLand { success, error ->
+                                         viewModel.saveCoastalLand { success, error, landId ->
                                             isSaving = false
-                                            if (success) {
-                                                AppUtil.showtoast(context, "Coastal Project Registered!")
-                                                navController.navigate("BlueCarbonDashboard") {
-                                                    popUpTo("BlueCarbonDashboard") { inclusive = true }
-                                                }
+                                            if (success && landId != null) {
+                                                AppUtil.showtoast(context, "Coastal Project Registered! Now identify your plants.")
+                                                navController.navigate("PlantIdentification/$landId/${area}/coastalLands")
                                             } else {
                                                 AppUtil.showtoast(context, error ?: "Failed to save")
                                             }
@@ -228,7 +226,7 @@ fun ARBoundaryScreen(navController: NavController, viewModel: LandViewModel) {
                                             isSaving = false
                                             if (success && landId != null) {
                                                 AppUtil.showtoast(context, "Land Registered! Now identify your plants.")
-                                                navController.navigate("PlantIdentification/$landId/${area}")
+                                                navController.navigate("PlantIdentification/$landId/${area}/lands")
                                             } else {
                                                 AppUtil.showtoast(context, error ?: "Failed to save")
                                             }

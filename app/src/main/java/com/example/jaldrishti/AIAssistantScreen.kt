@@ -53,6 +53,7 @@ fun AIAssistantScreen(
     // Get API keys safely
     val openaiKey = try { BuildConfig.OPENAI_API_KEY } catch (e: Exception) { "" }
     val elevenLabsKey = try { BuildConfig.ELEVENLABS_API_KEY } catch (e: Exception) { "" }
+    val geminiKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Exception) { "" }
     
     // Initialize AI components - Using Whisper + Ollama + ElevenLabs
     val aiManager = remember { AIAssistantManager(context) }
@@ -82,11 +83,11 @@ fun AIAssistantScreen(
         }
         
         // Check if API key is set
-        if (openaiKey.isEmpty()) {
+        if (openaiKey.isEmpty() && geminiKey.isEmpty()) {
             showApiKeyError = true
             viewModel.messages.add(
                 ChatMessage(
-                    "⚠️ OpenAI API key not set. Please add it to gradle.properties and rebuild the project.",
+                    "⚠️ No AI API keys found. Please add OPENAI_API_KEY or GEMINI_API_KEY to gradle.properties and rebuild the project.",
                     isUser = false
                 )
             )
@@ -95,8 +96,9 @@ fun AIAssistantScreen(
         
         // Send welcome message
         delay(500)
+        val currentProvider = aiManager.getCurrentAIProvider()
         val welcome = aiManager.getTextResponse(
-            "Introduce yourself briefly as a carbon credit assistant and ask how you can help. Keep it to 2 sentences.",
+            "Introduce yourself briefly as a carbon credit assistant powered by $currentProvider AI and ask how you can help. Keep it to 2 sentences.",
             viewModel.selectedLanguage
         )
         viewModel.messages.add(ChatMessage(welcome, isUser = false))
@@ -167,7 +169,7 @@ fun AIAssistantScreen(
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Add to gradle.properties:\nOPENAI_API_KEY=your_key\nELEVENLABS_API_KEY=your_key",
+                            "Add to gradle.properties:\nOPENAI_API_KEY=your_openai_key\nGEMINI_API_KEY=your_gemini_key\nELEVENLABS_API_KEY=your_elevenlabs_key",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
@@ -179,6 +181,14 @@ fun AIAssistantScreen(
             LanguageSelector(
                 selectedLanguage = viewModel.selectedLanguage,
                 onLanguageChange = { viewModel.selectedLanguage = it }
+            )
+            
+            // AI Provider selector
+            AIProviderSelector(
+                currentProvider = aiManager.getCurrentAIProvider(),
+                onProviderChange = { useGemini -> aiManager.setAIProvider(useGemini) },
+                hasOpenAI = openaiKey.isNotEmpty(),
+                hasGemini = geminiKey.isNotEmpty()
             )
             
             // Chat messages
@@ -448,6 +458,78 @@ fun LanguageSelector(
                 selected = selectedLanguage == lang,
                 onClick = { onLanguageChange(lang) },
                 label = { Text(lang, style = MaterialTheme.typography.labelMedium) }
+            )
+        }
+    }
+}
+
+@Composable
+fun AIProviderSelector(
+    currentProvider: String,
+    onProviderChange: (Boolean) -> Unit,
+    hasOpenAI: Boolean,
+    hasGemini: Boolean
+) {
+    if (!hasOpenAI && !hasGemini) return
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "AI Provider:",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        
+        if (hasGemini) {
+            FilterChip(
+                selected = currentProvider == "Gemini",
+                onClick = { onProviderChange(true) },
+                label = { 
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Gemini", style = MaterialTheme.typography.labelMedium)
+                        if (currentProvider == "Gemini") {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = Color.White
+                )
+            )
+        }
+        
+        if (hasOpenAI) {
+            FilterChip(
+                selected = currentProvider == "OpenAI",
+                onClick = { onProviderChange(false) },
+                label = { 
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("OpenAI", style = MaterialTheme.typography.labelMedium)
+                        if (currentProvider == "OpenAI") {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.secondary,
+                    selectedLabelColor = Color.White
+                )
             )
         }
     }

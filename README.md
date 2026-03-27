@@ -19,9 +19,10 @@ A comprehensive Android application that enables farmers and NGOs to register la
 
 ### 🤖 AI-Powered Features
 - **Plant Identification**: OpenAI Vision API for accurate plant species identification
-- **Voice Assistant**: Real-time speech recognition and AI responses
+- **Voice Assistant**: Real-time speech recognition with dual AI support (Gemini/OpenAI)
 - **Text-to-Speech**: Multi-language audio feedback using ElevenLabs
 - **Smart Calculations**: Scientific carbon credit calculations based on plant types
+- **AI Provider Choice**: Switch between Google Gemini and OpenAI for chat responses
 
 ## 🏗️ Architecture
 
@@ -33,7 +34,8 @@ A comprehensive Android application that enables farmers and NGOs to register la
 - **Maps**: OpenStreetMap (OSMDroid)
 - **AR**: ARCore for boundary marking
 - **AI Services**:
-  - OpenAI GPT-4o (Plant identification & chat)
+  - Google Gemini AI (Primary chat assistant)
+  - OpenAI GPT-4o (Plant identification & fallback chat)
   - ElevenLabs (Text-to-speech)
   - Android Speech Recognition (Voice input)
 
@@ -41,6 +43,7 @@ A comprehensive Android application that enables farmers and NGOs to register la
 ```
 app/src/main/java/com/example/jaldrishti/
 ├── ai/                          # AI service clients
+│   ├── GeminiClient.kt         # Google Gemini AI integration
 │   ├── OpenAIClient.kt         # OpenAI API integration
 │   ├── PlantIdentificationClient.kt # Plant identification logic
 │   ├── CarbonCreditCalculator.kt    # Carbon credit calculations
@@ -70,11 +73,13 @@ app/src/main/java/com/example/jaldrishti/
   - Microphone for voice assistant
 
 ### API Keys Required
-1. **OpenAI API Key** (for plant identification and chat)
+1. **Google Gemini API Key** (recommended for chat assistant)
+   - Get from: [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. **OpenAI API Key** (for plant identification and fallback chat)
    - Get from: [OpenRouter](https://openrouter.ai/) or [OpenAI](https://platform.openai.com/)
-2. **ElevenLabs API Key** (for text-to-speech)
+3. **ElevenLabs API Key** (for text-to-speech)
    - Get from: [ElevenLabs](https://elevenlabs.io/)
-3. **Firebase Project** (for backend services)
+4. **Firebase Project** (for backend services)
    - Create at: [Firebase Console](https://console.firebase.google.com/)
 
 ### Installation Steps
@@ -90,9 +95,9 @@ app/src/main/java/com/example/jaldrishti/
    Edit `gradle.properties` file:
    ```properties
    # API Keys
-   OPENAI_API_KEY=your_openai_or_openrouter_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here      # Primary AI assistant
+   OPENAI_API_KEY=your_openai_or_openrouter_api_key_here  # Plant ID & fallback
    ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
-   GEMINI_API_KEY=your_gemini_api_key_here  # Optional
    ```
 
 3. **Firebase Setup**
@@ -152,7 +157,9 @@ app/src/main/java/com/example/jaldrishti/
 
 - **Voice Commands**: Tap "Speak" and ask questions about carbon credits
 - **Text Chat**: Type questions for instant AI responses
+- **AI Provider**: Choose between Google Gemini (default) or OpenAI
 - **Multi-language**: Supports Hindi, Marathi, Tamil, Telugu, and more
+- **Smart Fallback**: Automatically switches AI providers if one fails
 
 ## 🧮 Carbon Credit Calculations
 

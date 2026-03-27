@@ -44,6 +44,7 @@ fun PlantIdentificationScreen(
     navController: NavController,
     landId: String,
     areaInHectares: Double,
+    collectionPath: String = "lands",
     viewModel: LandViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -315,17 +316,19 @@ fun PlantIdentificationScreen(
                     onSaveResults = {
                         // Save results to land data
                         scope.launch {
-                            viewModel.updateLandWithPlantData(
-                                landId = landId,
-                                plantResult = identificationResult!!,
-                                carbonResult = carbonCreditResult!!
-                            ) { success ->
-                                if (success) {
-                                    navController.navigate("GreenCarbonDashboard") {
-                                        popUpTo("GreenCarbonDashboard") { inclusive = true }
+                                viewModel.updateLandWithPlantData(
+                                    landId = landId,
+                                    plantResult = identificationResult!!,
+                                    carbonResult = carbonCreditResult!!,
+                                    collectionPath = collectionPath
+                                ) { success ->
+                                    if (success) {
+                                        val destination = if (collectionPath == "coastalLands") "BlueCarbonDashboard" else "GreenCarbonDashboard"
+                                        navController.navigate(destination) {
+                                            popUpTo(destination) { inclusive = true }
+                                        }
                                     }
                                 }
-                            }
                         }
                     }
                 )

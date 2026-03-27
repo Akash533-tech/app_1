@@ -7,12 +7,16 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
- * AI Assistant Manager - Coordinates Whisper, OpenAI, and ElevenLabs
+ * AI Assistant Manager - Coordinates Whisper, OpenAI/Gemini, and ElevenLabs
  */
 class AIAssistantManager(context: Context) {
     private val whisperClient = WhisperClient(context)
     private val openAIClient = OpenAIClient()
+    private val geminiClient = GeminiClient()
     private val elevenLabsClient = ElevenLabsClient(context)
+    
+    // AI Provider selection - can be switched based on availability
+    private var useGemini = false // Default to OpenAI (Groq)
     
     /**
      * Process voice input using Android's built-in speech recognition
@@ -28,9 +32,9 @@ class AIAssistantManager(context: Context) {
                 return@withContext Pair(transcription, "")
             }
             
-            // Step 2: Text to AI Response (OpenAI)
+            // Step 2: Text to AI Response (Gemini or OpenAI)
             Log.d("AIAssistant", "Getting AI response for: $transcription")
-            val aiResponse = openAIClient.chat(transcription, language)
+            val aiResponse = getAIResponse(transcription, language)
             
             return@withContext Pair(transcription, aiResponse)
             
@@ -56,9 +60,9 @@ class AIAssistantManager(context: Context) {
                 return@withContext Pair(transcription, "")
             }
             
-            // Step 2: Text to AI Response (OpenAI)
+            // Step 2: Text to AI Response (Gemini or OpenAI)
             Log.d("AIAssistant", "Getting AI response for: $transcription")
-            val aiResponse = openAIClient.chat(transcription, language)
+            val aiResponse = getAIResponse(transcription, language)
             
             return@withContext Pair(transcription, aiResponse)
             
@@ -90,17 +94,63 @@ class AIAssistantManager(context: Context) {
     suspend fun testConnections(): Map<String, Boolean> = withContext(Dispatchers.IO) {
         mapOf(
             "whisper" to whisperClient.testConnection(),
+            "gemini" to geminiClient.testConnection(),
             "openai" to openAIClient.testConnection(),
             "elevenlabs" to elevenLabsClient.testConnection()
         )
     }
     
     /**
-     * Get text response only (no speech)
+     * Get text response only (no speech) - uses Gemini by default, falls back to OpenAI
      */
     suspend fun getTextResponse(message: String, language: String = "English"): String {
-        return openAIClient.chat(message, language)
+        return getAIResponse(message, language)
     }
+    
+    /**
+     * Get AI response with automatic fallback between Gemini and OpenAI
+     */
+    private suspend fun getAIResponse(message: String, language: String = "English"): String {
+        return try {
+            if (useGemini) {
+                Log.d("AIAssistant", "Using Gemini AI")
+                val response = geminiClient.chatWithContext(message, language)
+                if (response.contains("API key not configured") || response.contains("trouble connecting")) {
+                    Log.w("AIAssistant", "Gemini failed, falling back to OpenAI")
+                    useGemini = false
+                    openAIClient.chat(message, language)
+                } else {
+                    response
+                }
+            } else {
+                Log.d("AIAssistant", "Using OpenAI")
+                val response = openAIClient.chat(message, language)
+                if (response.contains("API key not set") || response.contains("Error calling OpenAI")) {
+                    Log.w("AIAssistant", "OpenAI failed, trying Gemini")
+                    useGemini = true
+                    geminiClient.chatWithContext(message, language)
+                } else {
+                    response
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("AIAssistant", "Error getting AI response", e)
+            "Sorry, I'm having trouble connecting to AI services. Please check your API keys and try again."
+        }
+    }
+    
+    /**
+     * Switch AI provider manually
+     */
+    fun setAIProvider(useGemini: Boolean) {
+        this.useGemini = useGemini
+        Log.d("AIAssistant", "AI provider switched to: ${if (useGemini) "Gemini" else "OpenAI"}")
+    }
+    
+    /**
+     * Get current AI provider
+     */
+    fun getCurrentAIProvider(): String = if (useGemini) "Gemini" else "OpenAI"
     
     private fun getWhisperLanguageCode(language: String): String {
         return when (language.lowercase()) {

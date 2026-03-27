@@ -152,13 +152,26 @@ fun MapBoundaryScreen(navController: NavController, viewModel: LandViewModel) {
                                         val pointsMap = points.map { mapOf("lat" to it.latitude, "lng" to it.longitude) }
                                         viewModel.updateBoundaryData(area, perimeter, pointsMap)
                                         
-                                        viewModel.saveLand { success, error, landId ->
-                                            isSaving = false
-                                            if (success && landId != null) {
-                                                // Navigate to plant identification screen
-                                                navController.navigate("PlantIdentification/$landId/$area")
-                                            } else {
-                                                AppUtil.showtoast(context, error ?: "Failed to save")
+                                        val currentType = viewModel.draftLand.value.type
+                                        val isCoastal = currentType in listOf("Mangrove", "Seagrass", "Salt Marsh")
+                                        
+                                        if (isCoastal) {
+                                            viewModel.saveCoastalLand { success, error, landId ->
+                                                isSaving = false
+                                                if (success && landId != null) {
+                                                    navController.navigate("PlantIdentification/$landId/$area/coastalLands")
+                                                } else {
+                                                    AppUtil.showtoast(context, error ?: "Failed to save")
+                                                }
+                                            }
+                                        } else {
+                                            viewModel.saveLand { success, error, landId ->
+                                                isSaving = false
+                                                if (success && landId != null) {
+                                                    navController.navigate("PlantIdentification/$landId/$area/lands")
+                                                } else {
+                                                    AppUtil.showtoast(context, error ?: "Failed to save")
+                                                }
                                             }
                                         }
                                     }

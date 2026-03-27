@@ -94,10 +94,11 @@ fun Navigation(authViewModel: AuthViewModel) {
         }
         
         // Plant Identification
-        composable("PlantIdentification/{landId}/{area}") { backStackEntry ->
+        composable("PlantIdentification/{landId}/{area}/{type}") { backStackEntry ->
             val landId = backStackEntry.arguments?.getString("landId") ?: ""
             val area = backStackEntry.arguments?.getString("area")?.toDoubleOrNull() ?: 0.0
-            PlantIdentificationScreen(navController, landId, area)
+            val type = backStackEntry.arguments?.getString("type") ?: "lands"
+            PlantIdentificationScreen(navController, landId, area, type)
         }
     }
 }

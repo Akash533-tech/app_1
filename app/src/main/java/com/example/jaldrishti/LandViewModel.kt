@@ -89,6 +89,7 @@ class LandViewModel : ViewModel() {
         landId: String,
         plantResult: PlantIdentificationClient.PlantIdentificationResult,
         carbonResult: CarbonCreditCalculator.CarbonCreditResult,
+        collectionPath: String = "lands",
         onResult: (Boolean) -> Unit
     ) {
         val uid = Firebase.auth.currentUser?.uid
@@ -110,7 +111,7 @@ class LandViewModel : ViewModel() {
             "plantIdentificationDate" to com.google.firebase.Timestamp.now()
         )
         
-        Firebase.firestore.collection("lands")
+        Firebase.firestore.collection(collectionPath)
             .document(landId)
             .update(plantData as Map<String, Any>)
             .addOnSuccessListener {
@@ -181,10 +182,10 @@ class LandViewModel : ViewModel() {
             }
     }
 
-    fun saveCoastalLand(onResult: (Boolean, String?) -> Unit) {
+    fun saveCoastalLand(onResult: (Boolean, String?, String?) -> Unit) {
         val uid = Firebase.auth.currentUser?.uid
         if (uid == null) {
-            onResult(false, "User not logged in as NGO")
+            onResult(false, "User not logged in as NGO", null)
             return
         }
 
@@ -201,20 +202,21 @@ class LandViewModel : ViewModel() {
 
         Firebase.firestore.collection("coastalLands")
             .add(coastalData)
-            .addOnSuccessListener {
+            .addOnSuccessListener { documentReference ->
+                val landId = documentReference.id
                 _draftLand.value = DraftLand()
-                onResult(true, null)
+                onResult(true, null, landId)
             }
             .addOnFailureListener { e ->
                 if (e is com.google.firebase.firestore.FirebaseFirestoreException && 
                     e.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) {
                     
                     // FALLBACK TO DEMO MODE
-                    DemoDataManager.addCoastalLand(coastalData)
+                    val landId = DemoDataManager.addCoastalLand(coastalData)
                     _draftLand.value = DraftLand()
-                    onResult(true, "Authentication limited. Saved in Demo Mode.")
+                    onResult(true, "Authentication limited. Saved in Demo Mode.", landId)
                 } else {
-                    onResult(false, "Error saving coastal land: ${e.message}")
+                    onResult(false, "Error saving coastal land: ${e.message}", null)
                 }
             }
     }
